@@ -1,0 +1,41 @@
+# scraping
+requests
+# data
+pandas
+
+# Database
+## MySQl
+mysql-connector-python
+# database handlers
+git+https://github.com/nono-london/mysql_helpers.git
+git+https://github.com/nono-london/postgres_helpers.git
+# postgesql Helpers
+# psycopg2
+# asyncpg
+
+
+# Setup
+# https://medium.com/analytics-vidhya/how-to-create-a-python-library-7d5aea80cc3f
+# https://docs.python.org/3.7/distutils/setupscript.html
+twine
+setuptools
+
+# commands for setup
+# python setup.py bdist_wheel
+# install wheel commands
+# pip install /path/to/wheelfile.whl
+
+# Tests
+# python setup.py pytest
+pytest
+pytest-runner
+
+
+
+# python -m venv .venv
+
+# python -m pip install --upgrade pip
+# python.exe -m pip install --upgrade pip
+
+# pip install -r requirements.txt
+# pip install -r requirements.txt --upgrade

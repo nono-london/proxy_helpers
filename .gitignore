@@ -1,0 +1,22 @@
+# IDE
+.idea
+.pytest_cache
+**__pycache__
+
+# Venvs
+.venv
+venv
+
+# secret files
+.env
+/proxy_helpers/app_config_secret.py
+
+# files
+*.log
+*.csv
+**/downloads/*
+
+# prod
+build
+dist
+proxy_helpers.egg-info
