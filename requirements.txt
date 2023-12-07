@@ -6,12 +6,7 @@ pandas
 # Database
 ## MySQl
 mysql-connector-python
-# database handlers
 git+https://github.com/nono-london/mysql_helpers.git
-git+https://github.com/nono-london/postgres_helpers.git
-# postgesql Helpers
-# psycopg2
-# asyncpg
 
 
 # Setup
