@@ -16,7 +16,7 @@ setup(
                       "pandas",
                       "mysql-connector-python",
                       "requests",
-                      "mysql_helpers.git"
+                      "mysql_helpers"
                       ],
     dependency_links=["git+https://github.com/nono-london/mysql_helpers.git"],
     setup_requires=["pytest-runner"],
