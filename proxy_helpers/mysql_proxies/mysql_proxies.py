@@ -115,6 +115,7 @@ class ProxyHandler(MySQLProxy):
         # Proxy generator
         self.proxy_yield_rlock: RLock = RLock()
         self.next_proxy_yield_rlock: RLock = RLock()
+        self.print_proxy_rlock: RLock = RLock()
         self.proxy_generator = None
 
         # Initiate variables
