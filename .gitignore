@@ -17,6 +17,7 @@ venv
 **/downloads/*
 
 # prod
+.eggs
 build
 dist
 proxy_helpers.egg-info
