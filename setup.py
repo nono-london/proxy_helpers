@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 setup(
     name="proxy_helpers",
     packages=find_packages(),
-    version="0.0.1.1",
+    version="0.0.1.2",
     description="Handles proxies and database access",
     author="Nono London",
     author_email="",
@@ -16,8 +16,9 @@ setup(
                       "pandas",
                       "mysql-connector-python",
                       "requests",
-                      "git+https://github.com/nono-london/mysql_helpers.git"
+                      "mysql_helpers.git"
                       ],
+    dependency_links=["git+https://github.com/nono-london/mysql_helpers.git"],
     setup_requires=["pytest-runner"],
     tests_require=["pytest"],
     test_suite="tests",
