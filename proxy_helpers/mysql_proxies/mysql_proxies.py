@@ -126,10 +126,14 @@ class ProxyHandler(MySQLProxy):
             self.proxy_yield = self.refresh_generator_proxy_dict(
                 proxy_universe_size=proxy_universe_size)
 
-    def _print(self, str_to_print: object):
+    def _print(self, str_to_print: object,
+               verbose: bool = False):
         with self.print_proxy_rlock:
-            str_to_print = str(str_to_print)
-            print(str_to_print)
+            if verbose:
+                str_to_print = str(str_to_print)
+                print(str_to_print)
+            else:
+                print(".", end="")
 
     @staticmethod
     def get_requests_proxies_as_dict(full_url: str) -> dict:
