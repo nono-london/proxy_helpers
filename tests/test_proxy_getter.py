@@ -1,7 +1,6 @@
 from dotenv import load_dotenv
 
-from proxy_helpers.mysql_proxies.mysql_proxies import (MySQLProxy,
-                                                       ProxyHandler)
+from proxy_helpers.mysql_proxies.mysql_proxies import MySQLProxy, ProxyHandler
 
 load_dotenv()
 
@@ -21,5 +20,10 @@ def test_new_proxies():
     my_proxy = ProxyHandler()
     while proxy_number > 0:
         proxy_dict = my_proxy.get_next_proxy_from_generator()
-        print(proxy_dict['full_url'], proxy_dict['proxy_country'])
+        print(proxy_dict["full_url"], proxy_dict["proxy_country"])
         proxy_number -= 1
+
+
+if __name__ == "__main__":
+    test_mysql_proxies()
+    test_new_proxies()
