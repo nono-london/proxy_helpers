@@ -51,46 +51,48 @@ class MySQLProxy(MySQLConnectorNative):
 
     def update_proxy_score(self, proxy_id: Union[str, int], success: bool):
         """ method that update the proxy score"""
-        proxy_id = int(proxy_id)
+        proxy_id:int = int(proxy_id)
 
         if success:
             sql_string = """
-                            UPDATE proxy_schema.tbl_proxy_url 
+                            UPDATE tbl_proxy_url 
                             SET error_count= GREATEST((error_count - 1), -5000)
                             WHERE proxy_id= %s
                         """
         else:
             sql_string = """
-                            UPDATE proxy_schema.tbl_proxy_url  
+                            UPDATE tbl_proxy_url  
                             SET error_count= LEAST((error_count + 1), 5000)
                             WHERE proxy_id= %s
                         """
-
+        sql_variables:tuple = (proxy_id,)
         query_result: int = self.execute_one_query(sql_query=sql_string,
-                                                   sql_variables=(proxy_id,))
+                                                   sql_variables=sql_variables,
+                                                   close_connection=True)
 
         return query_result
 
     def update_proxy_selenium_score(self, proxy_id: Union[str, int], success: bool):
         """ methods that updates proxy score for selenium"""
-        proxy_id = int(proxy_id)
+        proxy_id:int = int(proxy_id)
 
         if success:
             sql_string = """
-                        UPDATE `proxy_schema`.`tbl_proxy_url`
+                        UPDATE `tbl_proxy_url`
                         SET
                         `selenium_success` = `selenium_success` + 1
                         WHERE `proxy_id` =  %s
                         """
         else:
             sql_string = """
-                        UPDATE `proxy_schema`.`tbl_proxy_url`
+                        UPDATE `tbl_proxy_url`
                         SET
                         `selenium_success` = `selenium_success` - 1
                         WHERE `proxy_id` =  %s
                         """
+        sql_variables:tuple=(proxy_id,)
         query_result: int = self.execute_one_query(sql_query=sql_string,
-                                                   sql_variables=(proxy_id,))
+                                                   sql_variables=sql_variables)
 
         return query_result
 
