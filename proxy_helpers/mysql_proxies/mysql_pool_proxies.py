@@ -197,7 +197,8 @@ class MySQLProxy(MySQLConnectorPoolNative):
 
 
 class ProxyHandler(MySQLProxy):
-    def __init__(self, proxy_universe_size: int = 1000,
+    def __init__(self,
+                 proxy_universe_size: int = 1000,
                  pool_size: int = 1,
                  pool_name: str = 'mysql_proxies'
                  ):
