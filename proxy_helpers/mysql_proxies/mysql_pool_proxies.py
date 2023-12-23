@@ -1,4 +1,10 @@
-""" Handles queries to MySQL """
+import logging
+from pathlib import Path
+
+from proxy_helpers.app_config import logging_config
+
+logger = logging.getLogger(f"proxy_helpers:{Path(__file__).name}")
+
 from threading import RLock
 from typing import Union, Optional, Dict
 
@@ -10,18 +16,21 @@ class MySQLProxy(MySQLConnectorPoolNative):
     """MySQL class helpers with Rlock use"""
 
     def __init__(
-        self,
-        db_host: Optional[str] = None,
-        db_port: Union[int, str] = None,
-        db_user: Optional[str] = None,
-        db_password: Optional[str] = None,
-        db_name: Optional[str] = None,
-        raise_on_warnings: bool = False,
-        proxy_universe_size: int = 100,
+            self,
+            db_host: Optional[str] = None,
+            db_port: Union[int, str] = None,
+            db_user: Optional[str] = None,
+            db_password: Optional[str] = None,
+            db_name: Optional[str] = None,
+            pool_size: Optional[int] = 1,
+            pool_name: Optional[str] = 'mysql_proxies',
+            raise_on_warnings: bool = False,
+            proxy_universe_size: int = 100,
+
     ):
         super().__init__(
             db_host, db_port, db_user, db_password, db_name, raise_on_warnings,
-            pool_size=5, pool_name='mysql_proxies'
+            pool_size=pool_size, pool_name=pool_name
         )
         self.proxy_universe_size: int = proxy_universe_size
 
@@ -47,10 +56,10 @@ class MySQLProxy(MySQLConnectorPoolNative):
         return self.execute_one_query(sql_query=sql_query, sql_variables=sql_variables)
 
     def delete_proxy(
-        self,
-        proxy_id: Optional[Union[str, int]] = None,
-        proxy_url: Optional[str] = None,
-        proxy_port: Optional[Union[int, str]] = None,
+            self,
+            proxy_id: Optional[Union[str, int]] = None,
+            proxy_url: Optional[str] = None,
+            proxy_port: Optional[Union[int, str]] = None,
     ):
         """methods that related to proxy and handle there deletion with their ID"""
         if proxy_id:
@@ -73,10 +82,10 @@ class MySQLProxy(MySQLConnectorPoolNative):
         return self.execute_one_query(sql_query=sql_string, sql_variables=sql_variables)
 
     def get_proxy_universe(
-        self,
-        proxy_universe_size: int = 1000,
-        return_as_list_of_dicts: bool = False,
-        shuffle_results: bool = True,
+            self,
+            proxy_universe_size: int = 1000,
+            return_as_list_of_dicts: bool = False,
+            shuffle_results: bool = True,
     ) -> Union[pd.DataFrame, list]:
         """methods that return a datagrame of proxies"""
         sql_string = """
@@ -96,11 +105,11 @@ class MySQLProxy(MySQLConnectorPoolNative):
         return result_df
 
     def update_proxy_score(
-        self,
-        success: bool,
-        proxy_id: Optional[Union[str, int]] = None,
-        proxy_url: Optional[str] = None,
-        proxy_port: Optional[Union[int, str]] = None,
+            self,
+            success: bool,
+            proxy_id: Optional[Union[str, int]] = None,
+            proxy_url: Optional[str] = None,
+            proxy_port: Optional[Union[int, str]] = None,
     ) -> Union[int, None]:
         """method that update the proxy score"""
 
@@ -188,10 +197,13 @@ class MySQLProxy(MySQLConnectorPoolNative):
 
 
 class ProxyHandler(MySQLProxy):
-    """Class proxy"""
-
-    def __init__(self, proxy_universe_size: int = 100):
-        super().__init__(proxy_universe_size=proxy_universe_size)
+    def __init__(self, proxy_universe_size: int = 1000,
+                 pool_size: int = 1,
+                 pool_name: str = 'mysql_proxies'
+                 ):
+        super().__init__(proxy_universe_size=proxy_universe_size,
+                         pool_size=pool_size,
+                         pool_name=pool_name)
         # Proxy generator
         self.proxy_yield_rlock: RLock = RLock()
         self.next_proxy_yield_rlock: RLock = RLock()
@@ -207,14 +219,6 @@ class ProxyHandler(MySQLProxy):
                 proxy_universe_size=proxy_universe_size
             )
 
-    def _print(self, str_to_print: object, verbose: bool = False):
-        with self.print_proxy_rlock:
-            if verbose:
-                str_to_print = str(str_to_print)
-                print(str_to_print)
-            else:
-                print(".", end="")
-
     @staticmethod
     def get_requests_proxies_as_dict(full_url: str) -> dict:
         """return dict {http:full_proxy_url, https:full_proxy_url using a full_proxy_url}"""
@@ -227,16 +231,17 @@ class ProxyHandler(MySQLProxy):
             while True:
                 try:
                     return next(self.proxy_yield)
-                except StopIteration:
-                    # self._print(
-                    #     f"Error while getting next proxy: {'StopIteration'}")
+                except StopIteration as ex:
+                    logger.debug(f"Handled error: {ex}")
                     self._set_proxy_generator()
 
 
 if __name__ == "__main__":
     from dotenv import load_dotenv
 
+    logging_config()
     load_dotenv()
+
     my_getter = MySQLProxy()
     proxy_sql_query = """
     SELECT * FROM tbl_proxy_url ORDER BY error_count DESC LIMIT 10 

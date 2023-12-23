@@ -1,4 +1,7 @@
-""" Handles queries to MySQL """
+import logging
+from pathlib import Path
+
+logger = logging.getLogger(f"proxy_helpers:{Path(__file__).name}")
 from threading import RLock
 from typing import Union, Optional, Dict
 
@@ -10,14 +13,14 @@ class MySQLProxy(MySQLConnectorNative):
     """MySQL class helpers with Rlock use"""
 
     def __init__(
-        self,
-        db_host: Optional[str] = None,
-        db_port: Union[int, str] = None,
-        db_user: Optional[str] = None,
-        db_password: Optional[str] = None,
-        db_name: Optional[str] = None,
-        raise_on_warnings: bool = False,
-        proxy_universe_size: int = 100,
+            self,
+            db_host: Optional[str] = None,
+            db_port: Union[int, str] = None,
+            db_user: Optional[str] = None,
+            db_password: Optional[str] = None,
+            db_name: Optional[str] = None,
+            raise_on_warnings: bool = False,
+            proxy_universe_size: int = 100,
     ):
         super().__init__(
             db_host, db_port, db_user, db_password, db_name, raise_on_warnings
@@ -46,10 +49,10 @@ class MySQLProxy(MySQLConnectorNative):
         return self.execute_one_query(sql_query=sql_query, sql_variables=sql_variables)
 
     def delete_proxy(
-        self,
-        proxy_id: Optional[Union[str, int]] = None,
-        proxy_url: Optional[str] = None,
-        proxy_port: Optional[Union[int, str]] = None,
+            self,
+            proxy_id: Optional[Union[str, int]] = None,
+            proxy_url: Optional[str] = None,
+            proxy_port: Optional[Union[int, str]] = None,
     ):
         """methods that related to proxy and handle there deletion with their ID"""
         if proxy_id:
@@ -72,10 +75,10 @@ class MySQLProxy(MySQLConnectorNative):
         return self.execute_one_query(sql_query=sql_string, sql_variables=sql_variables)
 
     def get_proxy_universe(
-        self,
-        proxy_universe_size: int = 1000,
-        return_as_list_of_dicts: bool = False,
-        shuffle_results: bool = True,
+            self,
+            proxy_universe_size: int = 1000,
+            return_as_list_of_dicts: bool = False,
+            shuffle_results: bool = True,
     ) -> Union[pd.DataFrame, list]:
         """methods that return a datagrame of proxies"""
         sql_string = """
@@ -95,11 +98,11 @@ class MySQLProxy(MySQLConnectorNative):
         return result_df
 
     def update_proxy_score(
-        self,
-        success: bool,
-        proxy_id: Optional[Union[str, int]] = None,
-        proxy_url: Optional[str] = None,
-        proxy_port: Optional[Union[int, str]] = None,
+            self,
+            success: bool,
+            proxy_id: Optional[Union[str, int]] = None,
+            proxy_url: Optional[str] = None,
+            proxy_port: Optional[Union[int, str]] = None,
     ) -> Union[int, None]:
         """method that update the proxy score"""
 
@@ -227,8 +230,8 @@ class ProxyHandler(MySQLProxy):
                 try:
                     return next(self.proxy_yield)
                 except StopIteration:
-                    # self._print(
-                    #     f"Error while getting next proxy: {'StopIteration'}")
+                    logger.debug(f"Handled error: {ex}")
+
                     self._set_proxy_generator()
 
 
