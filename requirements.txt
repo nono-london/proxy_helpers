@@ -1,3 +1,5 @@
+# Misc
+python-dotenv
 # scraping
 requests
 # data
