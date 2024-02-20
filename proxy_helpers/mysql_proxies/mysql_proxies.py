@@ -1,12 +1,13 @@
 import logging
 from pathlib import Path
 
-logger = logging.getLogger(f"proxy_helpers:{Path(__file__).name}")
 from threading import RLock
 from typing import Union, Optional, Dict
 
 import pandas as pd
 from mysql_helpers.mysql_con.mysql_sync import MySQLConnectorNative
+
+logger = logging.getLogger(f"proxy_helpers:{Path(__file__).name}")
 
 
 class MySQLProxy(MySQLConnectorNative):
@@ -79,8 +80,8 @@ class MySQLProxy(MySQLConnectorNative):
             proxy_universe_size: int = 1000,
             return_as_list_of_dicts: bool = False,
             shuffle_results: bool = True,
-    ) -> Union[pd.DataFrame, list]:
-        """methods that return a datagrame of proxies"""
+    ) -> Union[pd.DataFrame, list, None]:
+        """methods that return a dataframe of proxies"""
         sql_string = """
                     SELECT CONCAT(a.proxy_url,':', a.proxy_port) as 'full_url',
                         a.* 
@@ -91,6 +92,10 @@ class MySQLProxy(MySQLConnectorNative):
         result_df = self.fetch_all_as_df(
             sql_query=sql_string, sql_variables=(proxy_universe_size,)
         )
+
+        if result_df is None or len(result_df) == 0:
+            return None
+
         if shuffle_results:
             result_df = result_df.sample(n=len(result_df))
         if return_as_list_of_dicts:
@@ -229,9 +234,8 @@ class ProxyHandler(MySQLProxy):
             while True:
                 try:
                     return next(self.proxy_yield)
-                except StopIteration:
+                except StopIteration as ex:
                     logger.debug(f"Handled error: {ex}")
-
                     self._set_proxy_generator()
 
 
