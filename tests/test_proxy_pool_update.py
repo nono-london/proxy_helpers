@@ -1,11 +1,14 @@
-from proxy_helpers.mysql_proxies.mysql_proxies import MySQLProxy
-from dotenv import load_dotenv
 from datetime import datetime
+
+from dotenv import load_dotenv
+
+from proxy_helpers.mysql_proxies.mysql_proxies import MySQLProxy
 
 test_proxy: dict = {
     "upload_datetime": datetime.utcnow(),
     "proxy_url": "test_proxy_url",
     "proxy_port": 80,
+    "proxy_web_name": "test_proxy_name"
 }
 
 
