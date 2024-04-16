@@ -166,14 +166,14 @@ class MySQLProxy(MySQLConnectorPoolNative):
             sql_string = """
                         UPDATE `tbl_proxy_url`
                         SET
-                        `selenium_success` = `selenium_success` + 1
+                        `error_selenium_count` = `error_selenium_count` -1
                         WHERE `proxy_id` =  %s
                         """
         else:
             sql_string = """
                         UPDATE `tbl_proxy_url`
                         SET
-                        `selenium_success` = `selenium_success` - 1
+                        `error_selenium_count` = `error_selenium_count` + 1
                         WHERE `proxy_id` =  %s
                         """
         sql_variables: tuple = (proxy_id,)
