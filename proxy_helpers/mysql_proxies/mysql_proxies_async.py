@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from pathlib import Path
-from typing import Union, Optional, Dict, Tuple
+from typing import Union, Optional, Dict
 
 import pandas as pd
 from mysql_helpers.mysql_con.mysql_async import MySQLConnectorNativeAsync as _MySQLConnectorNativeAsync
@@ -9,7 +9,7 @@ from mysql_helpers.mysql_con.mysql_async import MySQLConnectorNativeAsync as _My
 logger = logging.getLogger(f"proxy_helpers:{Path(__file__).name}")
 
 
-class MySQLProxy(_MySQLConnectorNativeAsync):
+class ProxyHandler(_MySQLConnectorNativeAsync):
     """MySQL class helpers with Rlock use"""
 
     def __init__(
@@ -21,6 +21,7 @@ class MySQLProxy(_MySQLConnectorNativeAsync):
             db_name: Optional[str] = None,
             raise_on_warnings: bool = False,
             proxy_universe_size: int = 100,
+
     ):
         super().__init__(
             db_host, db_port, db_user, db_password, db_name, raise_on_warnings
@@ -28,6 +29,14 @@ class MySQLProxy(_MySQLConnectorNativeAsync):
         self.proxy_universe_size: int = proxy_universe_size
 
         self.mysql_connection_lock: asyncio.Lock()
+
+        # Proxy generator
+        self.proxy_yield_lock = asyncio.Lock()
+        self.next_proxy_yield_lock = asyncio.Lock()
+        self.print_proxy_lock = asyncio.Lock()
+        self.proxy_generator = None
+
+        self.proxy_yield = None
 
     async def insert_proxy(self, proxy_dict: Dict):
         sql_query = """
@@ -164,34 +173,6 @@ class MySQLProxy(_MySQLConnectorNativeAsync):
 
         return query_result
 
-    async def update_selenium_proxy_score(self,
-                                          success: bool,
-                                          proxy_id: int,
-                                          ) -> int:
-        """Update the score of the column error_selenium_count
-            success True minuses by 1, else add 1 to the count
-            :param success: whether the proxy worked with playwright
-            :param proxy_id: the proxy id
-            :return: the number of rows affected
-        """
-        if success:
-            sql_query: str = """
-                        UPDATE `proxy_schema`.`tbl_proxy_url`
-                        SET `error_selenium_count` = `error_selenium_count`-1
-                        WHERE `proxy_id` = %s;
-        """
-        else:
-            sql_query: str = """
-                        UPDATE `proxy_schema`.`tbl_proxy_url`
-                        SET `error_selenium_count` = `error_selenium_count`+1
-                        WHERE `proxy_id` = %s;
-            """
-        sql_variables: Tuple = (proxy_id,)
-
-        result = await self.execute_one_query(sql_query=sql_query, sql_variables=sql_variables)
-
-        return result
-
     async def update_proxy_selenium_score(self, proxy_id: Union[str, int], success: bool):
         """methods that updates proxy score for selenium"""
         proxy_id: int = int(proxy_id)
@@ -200,14 +181,14 @@ class MySQLProxy(_MySQLConnectorNativeAsync):
             sql_string = """
                         UPDATE `tbl_proxy_url`
                         SET
-                        `selenium_success` = `selenium_success` + 1
+                        `error_selenium_count` = `error_selenium_count` -1
                         WHERE `proxy_id` =  %s
                         """
         else:
             sql_string = """
                         UPDATE `tbl_proxy_url`
                         SET
-                        `selenium_success` = `selenium_success` - 1
+                        `error_selenium_count` = `error_selenium_count` + 1
                         WHERE `proxy_id` =  %s
                         """
         sql_variables: tuple = (proxy_id,)
@@ -230,20 +211,6 @@ class MySQLProxy(_MySQLConnectorNativeAsync):
             return
         for proxy in proxy_list:
             yield proxy
-
-
-class ProxyHandler(MySQLProxy):
-    """Class proxy"""
-
-    def __init__(self, proxy_universe_size: int = 100):
-        super().__init__(proxy_universe_size=proxy_universe_size)
-        # Proxy generator
-        self.proxy_yield_lock = asyncio.Lock()
-        self.next_proxy_yield_lock = asyncio.Lock()
-        self.print_proxy_lock = asyncio.Lock()
-        self.proxy_generator = None
-
-        self.proxy_yield = None
 
     async def _set_proxy_generator(self, proxy_universe_size: Optional[int] = 100):
         async with self.proxy_yield_lock:
@@ -297,17 +264,3 @@ if __name__ == "__main__":
     loop = asyncio.get_event_loop()
 
     loop.run_until_complete(try_out())
-    exit(0)
-
-    my_getter = MySQLProxy()
-    proxy_sql_query = """
-    SELECT * FROM tbl_proxy_url ORDER BY error_count DESC LIMIT 10 
-    """
-
-    print(loop.run_until_complete(my_getter.fetch_all_as_df(sql_query=proxy_sql_query)))
-    my_proxy = ProxyHandler()
-    counter: int = 1
-    while counter < 10_000:
-        proxy_dict = loop.run_until_complete(my_proxy.get_next_proxy_from_generator())
-        print(proxy_dict["full_url"], proxy_dict["proxy_country"])
-        counter += 1

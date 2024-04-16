@@ -3,18 +3,18 @@ import asyncio
 import pytest
 from dotenv import load_dotenv
 
-from proxy_helpers.mysql_proxies.mysql_proxies_async import MySQLProxy, ProxyHandler
+from proxy_helpers.mysql_proxies.mysql_proxies_async import ProxyHandler
 
 load_dotenv()
 
 
 @pytest.mark.asyncio
 async def test_mysql_proxies():
-    my_getter = MySQLProxy()
+    proxy_handler = ProxyHandler()
     proxy_sql_query = """
     SELECT * FROM tbl_proxy_url ORDER BY error_count DESC LIMIT 10 
     """
-    result_df = await my_getter.fetch_all_as_df(sql_query=proxy_sql_query)
+    result_df = await proxy_handler.fetch_all_as_df(sql_query=proxy_sql_query)
     assert result_df is not None
 
 

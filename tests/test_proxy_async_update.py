@@ -3,7 +3,7 @@ from datetime import datetime
 import pytest
 from dotenv import load_dotenv
 
-from proxy_helpers.mysql_proxies.mysql_proxies_async import ProxyHandler, MySQLProxy
+from proxy_helpers.mysql_proxies.mysql_proxies_async import ProxyHandler
 
 load_dotenv()
 
@@ -26,9 +26,8 @@ async def test_update_proxy_score():
 
     await proxy_handler.insert_proxy(proxy_dict=proxy_dict)
 
-    proxy_sql = MySQLProxy()
     sql_query = """SELECT * FROM tbl_proxy_url WHERE proxy_web_name=%s"""
-    proxy_dict_df = await proxy_sql.fetch_all_as_df(sql_query=sql_query, sql_variables=(proxy_web_name,))
+    proxy_dict_df = await proxy_handler.fetch_all_as_df(sql_query=sql_query, sql_variables=(proxy_web_name,))
     print(proxy_dict_df)
     for index, proxy_dict in proxy_dict_df.iterrows():
         await proxy_handler.update_proxy_score(success=True, proxy_id=proxy_dict['proxy_id'])
