@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 setup(
     name="proxy_helpers",
     packages=find_packages(),
-    version="0.0.2.3",
+    version="0.0.2.3.1",
     description="Handles proxies and database access",
     author="Nono London",
     author_email="",
