@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from pathlib import Path
-from typing import Union, Optional, Dict
+from typing import Union, Optional, Dict, Tuple
 
 import pandas as pd
 from mysql_helpers.mysql_con.mysql_async import MySQLConnectorNativeAsync as _MySQLConnectorNativeAsync
@@ -164,6 +164,34 @@ class MySQLProxy(_MySQLConnectorNativeAsync):
 
         return query_result
 
+    async def update_selenium_proxy_score(self,
+                                          success: bool,
+                                          proxy_id: int,
+                                          ) -> int:
+        """Update the score of the column error_selenium_count
+            success True minuses by 1, else add 1 to the count
+            :param success: whether the proxy worked with playwright
+            :param proxy_id: the proxy id
+            :return: the number of rows affected
+        """
+        if success:
+            sql_query: str = """
+                        UPDATE `proxy_schema`.`tbl_proxy_url`
+                        SET `error_selenium_count` = `error_selenium_count`-1
+                        WHERE `proxy_id` = %s;
+        """
+        else:
+            sql_query: str = """
+                        UPDATE `proxy_schema`.`tbl_proxy_url`
+                        SET `error_selenium_count` = `error_selenium_count`+1
+                        WHERE `proxy_id` = %s;
+            """
+        sql_variables: Tuple = (proxy_id,)
+
+        result = await self.execute_one_query(sql_query=sql_query, sql_variables=sql_variables)
+
+        return result
+
     async def update_proxy_selenium_score(self, proxy_id: Union[str, int], success: bool):
         """methods that updates proxy score for selenium"""
         proxy_id: int = int(proxy_id)
@@ -207,7 +235,7 @@ class MySQLProxy(_MySQLConnectorNativeAsync):
 class ProxyHandler(MySQLProxy):
     """Class proxy"""
 
-    def __init__(self, proxy_universe_size: int = 100, async_loop=None):
+    def __init__(self, proxy_universe_size: int = 100):
         super().__init__(proxy_universe_size=proxy_universe_size)
         # Proxy generator
         self.proxy_yield_lock = asyncio.Lock()
@@ -215,11 +243,7 @@ class ProxyHandler(MySQLProxy):
         self.print_proxy_lock = asyncio.Lock()
         self.proxy_generator = None
 
-        # Initiate variables
-        if async_loop is None:
-            async_loop = asyncio.get_event_loop()
-        async_loop.run_until_complete(
-            self._set_proxy_generator(proxy_universe_size=self.proxy_universe_size))
+        self.proxy_yield = None
 
     async def _set_proxy_generator(self, proxy_universe_size: Optional[int] = 100):
         async with self.proxy_yield_lock:
@@ -236,7 +260,7 @@ class ProxyHandler(MySQLProxy):
                 print(".", end="")
 
     @staticmethod
-    def get_requests_proxies_as_dict(full_url: str) -> dict:
+    async def get_requests_proxies_as_dict(full_url: str) -> dict:
         """return dict {http:full_proxy_url, https:full_proxy_url using a full_proxy_url}"""
         return {"http": full_url, "https": full_url}
 
@@ -250,17 +274,35 @@ class ProxyHandler(MySQLProxy):
                 except StopAsyncIteration as ex:
                     logger.debug(f"Handled error: {ex}")
                     await self._set_proxy_generator()
+                except AttributeError:
+                    # Initiate the proxy generator if is null, when app starts
+                    if self.proxy_yield is None:
+                        await self._set_proxy_generator()
+
+
+async def try_out():
+    proxy_number: int = 5
+
+    my_proxy = ProxyHandler()
+    while proxy_number > 0:
+        proxy_dict = await my_proxy.get_next_proxy_from_generator()
+        print(proxy_dict["full_url"], proxy_dict["proxy_country"])
+        proxy_number -= 1
 
 
 if __name__ == "__main__":
     from dotenv import load_dotenv
 
     load_dotenv()
+    loop = asyncio.get_event_loop()
+
+    loop.run_until_complete(try_out())
+    exit(0)
+
     my_getter = MySQLProxy()
     proxy_sql_query = """
     SELECT * FROM tbl_proxy_url ORDER BY error_count DESC LIMIT 10 
     """
-    loop = asyncio.get_event_loop()
 
     print(loop.run_until_complete(my_getter.fetch_all_as_df(sql_query=proxy_sql_query)))
     my_proxy = ProxyHandler()
