@@ -25,6 +25,7 @@ setuptools
 # Tests
 # python setup.py pytest
 pytest
+pytest-asyncio
 pytest-runner
 
 
